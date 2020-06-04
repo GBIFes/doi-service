@@ -2,76 +2,55 @@ package au.org.ala.doi.providers
 
 import au.org.ala.doi.util.ServiceResponse
 import com.github.jasminb.jsonapi.JSONAPIDocument
-import grails.util.Holders
 import org.apache.http.HttpStatus
 import org.apache.http.impl.EnglishReasonPhraseCatalog
 import org.gbif.api.model.common.DOI
 import org.gbif.api.model.common.DoiData
 import org.gbif.api.model.common.DoiStatus
-import org.gbif.datacite.rest.client.DataCiteClient
-import org.gbif.datacite.rest.client.configuration.ClientConfiguration
 import org.gbif.datacite.rest.client.model.DoiSimplifiedModel
 import org.gbif.datacite.rest.client.model.EventType
-import org.gbif.datacite.rest.client.retrofit.DataCiteRetrofitSyncClient
 import org.gbif.doi.metadata.datacite.*
 import org.gbif.doi.metadata.datacite.DataCiteMetadata.Creators.Creator
 import org.gbif.doi.metadata.datacite.DataCiteMetadata.Titles
 import org.gbif.doi.service.DoiExistsException
 import org.gbif.doi.service.DoiHttpException
-import org.gbif.doi.service.datacite.RestJsonApiDataCiteService
 
 import static org.gbif.doi.metadata.datacite.DataCiteMetadata.*
 import static org.gbif.doi.metadata.datacite.DataCiteMetadata.RightsList.Rights
 import static org.gbif.doi.metadata.datacite.DataCiteMetadata.Titles.Title
 
 class DataCiteService extends DoiProviderService {
-    DataCiteClient dataCiteClient
-    RestJsonApiDataCiteService restDataCiteService
-    ClientConfiguration clientConf = ClientConfiguration.builder().withBaseApiUrl(
-            Holders.config.datacite.doi.service.baseApiUrl as String).withTimeOut(
-            Holders.config.datacite.doi.service.timeOut as long).withFileCacheMaxSizeMb(
-            Holders.config.datacite.doi.service.fileCacheMaxSizeMb as long).withUser(
-            Holders.config.datacite.doi.service.user as String).withPassword(
-            Holders.config.datacite.doi.service.password as String).build()
+    def dataCiteClient
+    def restDataCiteService
+    def grailsApplication
 
-    DataCiteService() {
-        dataCiteClient = new DataCiteRetrofitSyncClient(clientConf)
-        restDataCiteService = new RestJsonApiDataCiteService(dataCiteClient)
-        log.info "Using $Holders.config.datacite.doi.service.baseApiUrl baseApiUrl"
+    String getPrefix() {
+        grailsApplication.config.getProperty('datacite.doi.service.prefix', String, "10.XXXXX")
+    }
+
+    String getShoulder() {
+        grailsApplication.config.getProperty('datacite.doi.service.shoulder', String, "ala")
+    }
+
+    String getPublicationLang() {
+        grailsApplication.config.getProperty('doi.publicationLang', String, "en")
     }
 
     def generateRequestPayload(String uuid, Map metadata, String landingPageUrl, String doi = null) {
         def dcMetadata = new DataCiteMetadata()
-
         // doi is a mandatory element in the schema, in a ANDS mint request the value is ignored
         // so here we generate one using prefix/shoulder.uuid
-        def doiValue = doi ?:
-                "${Holders.config.datacite.doi.service.prefix}/${Holders.config.datacite.doi.service.shoulder}.${uuid}"
-        def id = new Identifier()
-        id.setValue(doiValue as String)
-        id.setIdentifierType("DOI")
-        dcMetadata.setIdentifier(id)
+        def doiValue = doi ?: "${getPrefix()}/${getShoulder()}.${uuid}"
+        dcMetadata.identifier = new Identifier(value: doiValue as String, identifierType: 'DOI')
 
         // Creators
         def creators = new Creators()
         if (metadata.creators) {
-            for (def creator in metadata.creators) {
-                def dcCreator = new Creator()
-                def dcCreatorName = new Creator.CreatorName()
-                dcCreatorName.setValue(creator.name as String)
-                dcCreator.setCreatorName(dcCreatorName)
-                creators.creator.add(dcCreator)
-            }
+            creators.creator.addAll(metadata.creators.collect { creator -> new Creator(creatorName: new Creator.CreatorName(value: creator.name as String)) })
         }
         // We add also authors as creators like AndsService
         if (metadata.authors) {
-            for (def author in metadata.authors) {
-                def dcCreator = new Creator()
-                def dcCreatorName = new Creator.CreatorName()
-                dcCreatorName.setValue(author as String)
-                dcCreator.setCreatorName(dcCreatorName)
-                creators.creator.add(dcCreator)
-            }
+            creators.creator.addAll(metadata.authors.collect { author -> new Creator(creatorName: new Creator.CreatorName(value: author as String)) })
         }
         dcMetadata.setCreators(creators)
 
@@ -92,14 +71,14 @@ class DataCiteService extends DoiProviderService {
         }
         if (metadata.subtitle) {
             def sub = new Title()
-            sub.setValue("${metadata.subtitle}")
+            sub.setValue(metadata.subtitle as String)
             sub.setTitleType(TitleType.SUBTITLE)
             titles.title.add(sub)
         }
         dcMetadata.setTitles(titles)
 
         def publisher = new Publisher()
-        publisher.setValue("${metadata.publisher}")
+        publisher.setValue(metadata.publisher as String)
         dcMetadata.setPublisher(publisher)
 
         dcMetadata.setPublicationYear((String) metadata.publicationYear ?:
@@ -153,12 +132,11 @@ class DataCiteService extends DoiProviderService {
             dcMetadata.setRightsList(rightsList)
         }
 
-        // FIXME put lang in config
-        dcMetadata.setLanguage("en")
+        dcMetadata.setLanguage(getPublicationLang())
 
         // ResourceType
         def resourceType = new DataCiteMetadata.ResourceType()
-        def resourceTypeGeneral = org.gbif.doi.metadata.datacite.ResourceType.fromValue(metadata.resourceType as String)
+        def resourceTypeGeneral = ResourceType.fromValue(metadata.resourceType as String)
         resourceType.setValue(metadata.resourceText as String)
         resourceType.setResourceTypeGeneral(resourceTypeGeneral)
         dcMetadata.setResourceType(resourceType)
@@ -222,21 +200,20 @@ class DataCiteService extends DoiProviderService {
     // FAILED (-): ()
     private ServiceResponse updateStatus(String doiS, EventType event) {
         def doi = new DOI(doiS)
+        def response
         DoiData doiData = restDataCiteService.resolve(doi)
         if (event == EventType.HIDE  && (doiData.getStatus() == DoiStatus.RESERVED ||
                 doiData.getStatus() == DoiStatus.DELETED)
         ) {
             // As with ANDS service, when already deactivated we return success
             log.debug "Deactivated doi $doi"
-            return successResponse(doiS)
-        } else
-        if (event == EventType.PUBLISH  && doiData.getStatus() == DoiStatus.REGISTERED ) {
+            response =  successResponse(doiS)
+        } else if (event == EventType.PUBLISH  && doiData.getStatus() == DoiStatus.REGISTERED ) {
             // Same here
             log.debug "Activated doi $doi"
-            return successResponse(doiS)
-        } else
-        if (doiData.getStatus() != DoiStatus.RESERVED && doiData.getStatus() != DoiStatus.REGISTERED) {
-            return new ServiceResponse(HttpStatus.SC_BAD_REQUEST, "Only a reserved/registered doi can be updated. DOI "
+            response = successResponse(doiS)
+        } else if (doiData.getStatus() != DoiStatus.RESERVED && doiData.getStatus() != DoiStatus.REGISTERED) {
+            response = new ServiceResponse(HttpStatus.SC_BAD_REQUEST, "Only a reserved/registered doi can be updated. DOI "
                     + doi.getDoiName() + " status is " + doiData.getStatus(), null)
         } else {
             try {
@@ -246,11 +223,12 @@ class DataCiteService extends DoiProviderService {
                 model.setEvent(event.toString())
                 JSONAPIDocument<DoiSimplifiedModel> jsonApiWrapper = new JSONAPIDocument(model)
                 dataCiteClient.updateDoi(doi.getDoiName(), jsonApiWrapper)
+                response = successResponse(doiS)
             } catch (Exception e) {
-                processErrorResponse(doi, e)
+                response = processErrorResponse(doi, e)
             }
         }
-        return successResponse(doiS)
+        return response
     }
 
     @Override

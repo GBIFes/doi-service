@@ -24,9 +24,9 @@ import static au.org.ala.doi.util.Utils.isUuid
 class DoiService extends BaseDataAccessService {
 
     GrailsApplication grailsApplication
-    AndsService andsService = new AndsService()
-    DataCiteService dataCiteService = new DataCiteService()
-    MockService mockService = new MockService()
+    AndsService andsService
+    DataCiteService dataCiteService
+    MockService mockService
     Storage storage
     EmailService emailService
     DoiSearchService doiSearchService

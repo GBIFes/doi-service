@@ -196,6 +196,7 @@ doi:
       - "biocache"
       - "phylolink"
       - "csdm"
+    publicationLang: "en"
 file:
     store: /data/doi-service/files
 

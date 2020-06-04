@@ -9,16 +9,13 @@ import org.apache.http.HttpStatus
 import org.gbif.api.model.common.DoiData
 import org.gbif.api.model.common.DoiStatus
 import org.gbif.datacite.rest.client.DataCiteClient
-import org.gbif.datacite.rest.client.configuration.ClientConfiguration
 import org.gbif.doi.metadata.datacite.DataCiteMetadata
 import org.gbif.doi.metadata.datacite.DateType
 import org.gbif.doi.metadata.datacite.TitleType
-import org.gbif.doi.service.DoiExistsException
 import org.gbif.doi.service.DoiHttpException
 import org.gbif.doi.service.datacite.DataCiteValidator
 import org.gbif.doi.service.datacite.RestJsonApiDataCiteService
 import org.grails.spring.beans.factory.InstanceFactoryBean
-import retrofit2.http.DELETE
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -33,11 +30,6 @@ class DataCiteServiceSpec extends Specification implements ServiceUnitTest<DataC
 
         service.dataCiteClient = Mock(DataCiteClient)
         service.restDataCiteService = Mock(RestJsonApiDataCiteService)
-        service.clientConf = ClientConfiguration.builder()
-                .withBaseApiUrl("https://api.test.datacite.org/")
-                .withTimeOut(60)
-                .withFileCacheMaxSizeMb(64)
-                .withUser("bob").withPassword("12345").build()
     }
 
 
