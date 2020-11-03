@@ -1,8 +1,9 @@
+<g:set var="orgNameShort" value="${grailsApplication.config.skin.orgNameShort}"/>
 <!DOCTYPE html>
 <html>
 <head>
     <meta name="layout" content="${grailsApplication.config.skin.layout}"/>
-    <title><g:message code="index.doi.homepage.title" vars="[grailsApplication.config.skin.orgNameShort]" /></title>
+    <title><g:message code="doi.homepage.title" args="[orgNameShort]" /></title>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -35,7 +36,7 @@
                 <div class="panel-body">
 
                     <div class="word-limit">
-                        <h1 class="heading-xlarge"><g:message code="index.doi.title" vars="[grailsApplication.config.skin.orgNameShort]"/></h1>
+                        <h1 class="heading-xlarge"><g:message code="index.doi.title" args="[orgNameShort]"/></h1>
 
                         <p class="lead">
                             <g:message code="index.doi.description" />
@@ -95,7 +96,7 @@
                                                     </g:if>
                                                 </h4>
 
-                                                <div class="padding-bottom-10"><a href="https://doi.org/${doi.doi}" type="button" class="doi doi-sm"><span><g:message code="index.item.doi" /></span><span>${doi.doi}</a></div>
+                                                <div class="padding-bottom-10"><a href="https://doi.org/${doi.doi}" type="button" class="doi doi-sm"><span><g:message code="index.item.doi" /></span>${doi.doi}</a></div>
                                                 <div class="padding-bottom-10"><strong><g:message code="index.item.created" /></strong> ${doi.dateMinted}</div>
                                                 <div class="padding-bottom-10"><strong><g:message code="index.item.author" /></strong> ${doi.authors}</div>
                                                 <div class="padding-bottom-20">
