@@ -96,7 +96,7 @@
                                                     </g:if>
                                                 </h4>
 
-                                                <div class="padding-bottom-10"><a href="https://doi.org/${doi.doi}" type="button" class="doi doi-sm"><span><g:message code="index.item.doi" /></span>${doi.doi}</a></div>
+                                                <div class="padding-bottom-10"><a href="https://doi.org/${doi.doi}" type="button" class="doi doi-sm"><span><g:message code="index.item.doi" /></span><span>${doi.doi}</span></a></div>
                                                 <div class="padding-bottom-10"><strong><g:message code="index.item.created" /></strong> ${doi.dateMinted}</div>
                                                 <div class="padding-bottom-10"><strong><g:message code="index.item.author" /></strong> ${doi.authors}</div>
                                                 <div class="padding-bottom-20">
