@@ -12,15 +12,15 @@
 <div class="row">
     <div class="col-md-12" id="doiTitle">
         <h2><a href="https://doi.org/${doi.doi}" type="button" class="doi"><span><g:message code="biocache.doi.title" /></span><span>${doi.doi}</span></a></h2>
-        <h3><g:message code="doi.page.download.subtitle" args="[g.formatDate(date:doi.dateCreated, format:message(code:'doi.page.date.format'))]"/> /></h3>
+        <h3><g:message code="doi.page.download.subtitle" args="[g.formatDate(date:doi.dateCreated, format:message(code:'doi.page.date.format'))]"/></h3>
     </div>
     <div class="col-md-12 text-right">
         <a href="${request.contextPath}/doi/${doi.uuid}/download" class="btn btn-primary"><i class="glyphicon glyphicon-download-alt"></i>&nbsp; <g:message code="doi.page.download.link" /></a>
     </div>
     <div class="col-md-12"><b><g:message code="doi.page.file" /></b> <a href="${request.contextPath}/doi/${doi.uuid}/download"> ${doi.filename?:message(code:"doi.page.download.file.not.found")}</a></div><br>
-    <div class="col-md-12"><g:message code="doi.page.record.count" args="[g.formatNumber(number:doi.applicationMetadata?.recordCount, type:'number')]"/>< /></div>
+    <div class="col-md-12"><g:message code="doi.page.record.count" args="[g.formatNumber(number:doi.applicationMetadata?.recordCount, type:'number')]"/></div>
     <div class="col-md-8 col-sm-12"><b><g:message code="doi.page.search.query" /></b> <doi:formatSearchQuery searchUrl="${doi.applicationMetadata?.searchUrl}" /> </div>
-    <div class="col-md-12"><b><g:message code="doi.page.search.url" /></b><a href="${doi.applicationMetadata?.searchUrl}"><doi:sanitiseRawContent content="${doi.applicationMetadata?.queryTitle?.encodeAsRaw()}" /></a></div>
+    <div class="col-md-12"><b><g:message code="doi.page.search.url" /></b> <a href="${doi.applicationMetadata?.searchUrl}"><doi:sanitiseRawContent content="${doi.applicationMetadata?.queryTitle?.encodeAsRaw()}" /></a></div>
     <g:set var="enabled" value="${doi.applicationMetadata?.qualityFilters != null && doi.applicationMetadata?.qualityFilters.size() > 0}"/>
     <div class="col-md-12">
         <g:if test="${enabled}">
