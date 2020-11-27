@@ -94,7 +94,7 @@
                                    %{--<td>${doi.title}</td>--}%
                                    <td><g:formatNumber number="${doi.applicationMetadata?.recordCount}" type="number" /></td>
                                    <td><g:formatNumber number="${doi.applicationMetadata?.datasets?.size()}" type="number" /></td>
-                                   <td><a href="${doi?.applicationMetadata?.searchUrl}">Re-run search</a> <doi:formatSearchQuery searchUrl="${doi?.applicationMetadata?.searchUrl}" queryTitle="${doi.applicationMetadata?.queryTitle?.encodeAsRaw()}"/></td>
+                                   <td><a href="${doi?.applicationMetadata?.searchUrl}"><g:message code="myDownloads.re.run.search" /></a> <doi:formatSearchQuery searchUrl="${doi?.applicationMetadata?.searchUrl}" queryTitle="${doi.applicationMetadata?.queryTitle?.encodeAsRaw()}"/></td>
                                </tr>
                             </g:each>
                         </tbody>
